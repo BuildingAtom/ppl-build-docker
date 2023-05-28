@@ -1,0 +1,32 @@
+# Required Libraries
+libgmp-dev
+
+# Build essentials
+build-essential
+
+# Build tools
+autotools-dev
+automake
+autoconf
+libtool
+
+# Documentation Generation
+doxygen
+texlive-latex-base
+texlive-fonts-recommended
+texlive-fonts-extra
+texlive-latex-extra
+texlive-science
+doxygen-latex
+doxygen-doc
+
+# Extra users so we can add you!
+apt-utils
+libnss-extrausers
+
+# Useful utilities
+vim
+nano
+emacs
+#sudo
+

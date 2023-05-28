@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# But not these files...
+!/.gitignore
+!/.dockerignore
+!/apt-dependencies.txt
+!/Dockerfile
+!/README.md
+!/start-env.sh

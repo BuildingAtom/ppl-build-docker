@@ -1,0 +1,6 @@
+# Ignore everything
+**
+
+# Allow the apt-dependencies.txt file
+!/apt-dependencies.txt
+
