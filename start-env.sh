@@ -15,19 +15,30 @@ fi
 # If cleaning, stop container and delete image
 if [ ${1:-""} == "clean" ]; then
     echo "Cleaning Container"
-    docker rm -f $NAME
-    # TODO Finish
+    [ "$(docker ps -aq -f name=$NAME)" ] && docker rm -f $NAME
+    # Delete all related images
+    [ "$(docker images -q $IMAGE)" ] && docker images --filter label=stage=buildingatom-ppl-builder --format {{.ID}} | xargs docker image rm
     exit 0
 fi
 
 ## First build the docs container
-PRE_BUILD_ID=$(docker inspect --format {{.Id}} $IMAGE)
-docker build -t $IMAGE -f Dockerfile .
-POST_BUILD_ID=$(docker inspect --format {{.Id}} $IMAGE)
-# If restarting or the image changed, stop the container
-if [ ${1:-""} == "restart" ] || [ "$PRE_BUILD_ID" != "$POST_BUILD_ID" ]; then 
-    echo "Deleting Container for Restart"
+PRE_BUILD_ID=
+POST_BUILD_ID=
+if [ ! "$(docker images -q $IMAGE)" ] || [ ${1:-""} == "rebuild" ]; then
+    PRE_BUILD_ID=$(docker inspect --format {{.Id}} $IMAGE 2>/dev/null)
+    echo "Building Image"
+    docker build -t $IMAGE -f Dockerfile .
+    POST_BUILD_ID=$(docker inspect --format {{.Id}} $IMAGE)
+fi
+# If image changed, delete the container
+if [ "$PRE_BUILD_ID" != "$POST_BUILD_ID" ] && [ "$(docker ps -aq -f name=$NAME)" ]; then 
+    echo "Deleting Container for Rebuilt Image"
     docker rm -f $NAME
+fi
+# If restarting, just stop the container
+if [ ${1:-""} == "restart" ] && [ "$(docker ps -aq -f name=$NAME)" ]; then
+    echo "Stopping Container for Restart"
+    docker stop $NAME
 fi
 
 ## Configuration for script vars
@@ -69,10 +80,19 @@ DOCKER_OPTIONS+="--workdir=$MOUNT_DIR "
 #DOCKER_OPTIONS+="--entrypoint make "
 DOCKER_OPTIONS+="--net=host "
 
+## Launch
+# Determine if we are launching anything
+COMMAND=/bin/bash
+if [ ${1:-""} == "--" ]; then
+    COMMAND="/bin/bash -l -c ${@:2}"
+elif [ ${2:-""} == "--" ]; then
+    COMMAND="/bin/bash -l -c ${@:3}"
+fi
 
+# Determin if we need to restart the container
 if [ ! "$(docker ps -q -f name=$NAME)" ]; then # If container isn't running
     # If it exists, but needs to be started
-    if [  "$(docker ps -aq -f name=$NAME)" ]; then
+    if [ "$(docker ps -aq -f name=$NAME)" ]; then
         echo "Resuming Container"
         docker start $NAME
     else
@@ -81,6 +101,6 @@ if [ ! "$(docker ps -q -f name=$NAME)" ]; then # If container isn't running
     fi
 fi
 
-echo "Attaching to container"
-docker exec -it $NAME /bin/bash
+echo "Running in Container"
+docker exec -it $NAME $COMMAND
 

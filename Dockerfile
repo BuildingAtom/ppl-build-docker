@@ -1,5 +1,6 @@
-# Base MATLAB image, extended from the matlab-ref-arch group
+# Base image
 FROM ubuntu:22.04
+LABEL stage=buildingatom-ppl-builder
 
 # Install the apt dependencies
 ENV DEBIAN_FROTNEND="noninteractive" TZ="Etc/UTC"

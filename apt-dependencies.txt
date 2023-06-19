@@ -28,5 +28,5 @@ libnss-extrausers
 vim
 nano
 emacs
-#sudo
-
+sudo
+libeigen3-dev
